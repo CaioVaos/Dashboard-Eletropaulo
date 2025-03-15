@@ -1,0 +1,575 @@
+---
+title: "Eletropaulo"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: 
+      version: 4
+      bootswatch: sandstone
+      success: "#000000"
+    logo: "Imagens/logo.png" 
+runtime: shiny
+---
+
+```{r global, include=FALSE}
+library(tidyverse)
+library(scales)
+library(plotly)
+df <- arrow::read_feather('Bases/Grupo2_ELETROPAULO.feather') |> 
+  pivot_wider(names_from = DscDetalheMercado,
+              values_from = VlrMercado) |> 
+  mutate(DscSubGrupoTarifario = case_when(str_starts(DscSubGrupoTarifario, "A") ~ "A",
+                                          str_starts(DscSubGrupoTarifario, "B") ~ "B",
+                                          TRUE ~ DscSubGrupoTarifario ),
+         DscSubClasseConsumidor = case_when(str_starts(DscSubClasseConsumidor, "Residencial baixa renda") ~ "Residencial baixa renda",
+                                            str_starts(DscSubClasseConsumidor, "Iluminação pública") ~ "Iluminação pública",
+                                            TRUE ~ DscSubClasseConsumidor ),
+         `Número de Consumidores` = rowSums(cbind(`Número de consumidores`, `Número de Consumidores`), na.rm = T)) |> 
+  select(-c(1:4, 11:13, 16,`Número de consumidores`))
+dfe <- arrow::read_feather('Bases/comparativo_empresas.feather')
+```
+
+Apresentação
+================================================================================
+
+{.tabset}
+--------------------------------------------------------------------------------
+
+### Geral
+
+<center>
+**UM POUCO SOBRE A HISTÓRIA**
+</center>
+
+A Enel Distribuição São Paulo, anteriormente Eletropaulo Metropolitana e AES Eletropaulo, é uma empresa concessionária de distribuição de energia elétrica com atuação no estado de São Paulo, com sua sede em Barueri. Também foi conhecida apenas como Eletropaulo, uma empresa estatal extinta, da qual a Enel Distribuição São Paulo era parte antes de ser privatizada.
+
+O trajeto da companhia acompanhou o crescimento de São Paulo.
+
+- Em 1899, um grupo de empresários canadenses funda a The São Paulo Hailway, Light Power Company Limited, empresa essa que foi responsável pela construção de toda a infraestrutura de distribuição de São Paulo durrante 70 anos de concessão. 
+
+- Em 1956, passa a se chamar Light - Serviços de Eletricidade SA. 
+
+- Em 1979, o governo brasileiro, por meio da Eletrobrás, comprou da Brascan o controle acionário da Light. 
+
+- Em 1981, o controle da parte paulista empresa passa para o Governo de São Paulo e assim, cria sua empresa de energia, a Eletropaulo - Eletricidade de São Paulo SA. 
+
+- Em 1955, Paulo Garcia criou o Programa Estadual de Desestatização (PED), para iniciar um processo de privatização de inúmeras empresas estatais paulistas. Por ser considerada uma empresa grande demais para ser privatizada em um bloco único, ela foi dividida em quatro blocos: Um dos blocos era a empresa estatal chamada provisoriamente de Eletropaulo Metropolitana, uma das empresas mais rentáveis do bloco, responsável pela operação de serviços de energia elétrica na capital de São Paulo e parte da região metropolitana. A Eletropaulo Metropolitana foi privatizada em 1999.
+
+- Em 2018, a italiana Enel se tornou líder em distribuição de energia no Brasil ao fechar a compra de 73% da Eletropaulo por R$5,552 bilhões, a qual passou a se chamar Enel Distribuição São Paulo. Em Junho, do mesmo ano, a Enel já possuia 94,42% de participação, segundo a Eletropaulo.
+
+<center>
+<img src="https://s2-g1.glbimg.com/U-R4T-_gxK1GhNyvffqGsDEJlH8=/0x0:1600x3646/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2018/D/z/myGciIRzyFz1fyEkcudg/enel-x-eletropaulo-v2-vale-este.png" alt="Gráfico g1" width="274" height="632">
+</center>
+
+> Fontes: [Memoria da Eletricidade](https://memoriadaeletricidade.com.br/acervo/1924/eletricidade-de-sao-paulo-s-a-eletropaulo ) ; [g1](https://g1.globo.com/economia/noticia/2018/12/03/eletropaulo-muda-de-nome-e-se-torna-enel-distribuicao-sao-paulo.ghtml)
+
+### Atual
+
+<center>
+**PERFIL ATUAL DA EMPRESA (No final do ano de 2023)**
+</center>
+
+- A Enel Distribuição São Paulo é uma Companhia de capital aberto estando presente em 24 cidades da região metropolitana de São Paulo, incluindo a capital paulista, um dos principais centros econômico-financeiros do país. A área de concessão, de 4.526 km², concentra o maior PIB nacional e a mais alta densidade demográfica do país, com 1.751 unidades consumidoras por km², o que corresponde a aproximadamente 8,1%2 do total de energia elétrica consumida no Brasil.
+
+- Para cumprir com excelência o desafio de atender aproximadamente 18 milhões de pessoas todos os dias, a Enel Distribuição São Paulo está permanentemente comprometida em prestar melhores serviços e de forma mais rápida. A Companhia está sempre preocupada em ouvir e entender seus clientes, mantendo um diálogo aberto com todos os seus públicos. A Enel Distribuição São Paulo é consciente da importância do seu papel no desenvolvimento do estado e do país.
+
+- Para atender a demanda de aproximadamente 7,9 milhões de unidades consumidoras, a Enel Distribuição São Paulo, dispõe de uma infraestrutura formada por 163 subestações e uma malha de distribuição e subtransmissão, cabos aéreos e subterrâneos de mais de 44 mil quilômetros, dos quais 1.846 km são linhas de subtransmissão e 42.562 km referem-se a redes de distribuição aérea e subterrânea.
+
+<center>
+![Gráfico g1](https://www.enel.com.br/content/dam/enel-br/pt-saopaulo/fornecimento/mapa_concessao_SP.jpeg)
+</center>
+
+> Fontes: [Memoria da Eletricidade](https://memoriadaeletricidade.com.br/acervo/1924/eletricidade-de-sao-paulo-s-a-eletropaulo ) ; [g1](https://g1.globo.com/economia/noticia/2018/12/03/eletropaulo-muda-de-nome-e-se-torna-enel-distribuicao-sao-paulo.ghtml)
+
+### Mapa
+
+```{r}
+library(leaflet)
+municipios_enel <- c("Barueri","Cajamar","Carapicuíba","Cotia","Diadema","Embu das Artes",
+                          "Embu-Guaçu","Itapecerica da Serra","Itapevi","Jandira","Juquitiba",
+                          "Mauá","Osasco","Pirapora do Bom Jesus","Ribeirão Pires",
+                          "Rio Grande da Serra","Santana de Parnaíba","Santo André",
+                          "São Bernardo do Campo","São Caetano do Sul","São Lourenço da Serra",
+                          "São Paulo","Taboão da Serra","Vargem Grande Paulista")
+leaflet(data = geobr::read_municipality(year = 2022, showProgress = FALSE) |> 
+          filter(code_state == 35)) |> 
+  addTiles() |> 
+  addPolygons(fillColor = ~ifelse(name_muni %in% municipios_enel, "blue", "gray"),
+              color = "black",
+              weight = 1,opacity = 0.6,fillOpacity = 0.8,
+              label = ~name_muni) |> 
+  addLegend("bottomleft", title = "Legenda",
+            colors = c("blue", "gray"),
+            labels = c("Enel", "Outras Distribuidoras")) |> 
+  addControl("<b>Municípios de São Paulo</b>", position = "topright")
+```
+
+
+Descrição dos Valores
+================================================================================
+
+Inputs{.sidebar}
+--------------------------------------------------------------------------------
+
+```{r}
+selectInput("categoria", "Selecione a categoria:",
+            choices = c("Monetário (R$)" = "R$",
+                        "Consumo (kWh)" = "kWh",
+                        "Potência (kW)" = "kW"))
+```
+
+Plots {.tabset}
+--------------------------------------------------------------------------------
+
+### Proporção Geral
+
+```{r}
+renderPlotly({
+  labs_title_pg <- switch(input$categoria,
+                       "R$" = "Percentual de cada categoria <b>Monterária</b> - jan/2023 a out/2024",
+                       "kWh" = "Percentual de cada categoria <b>Consumo</b> - jan/2023 a out/2024",
+                       "kW" = "Percentual de cada categoria <b>Potência</b> - jan/2023 a out/2024")
+  select_categoria <- switch(input$categoria,
+                             "R$" = names(df[, grep("R\\$", names(df))]),
+                             "kWh" = names(df[, grep("kWh", names(df))]),
+                             "kW" = names(df[, setdiff(grep("kW", names(df)), grep("kWh", names(df)))]))
+    
+  ggplotly(
+    df |>
+      select(select_categoria) |> 
+      group_by() |> 
+      summarise(across(everything(), ~ sum(.x, na.rm = TRUE), .names = "{.col}"),
+                .groups = "drop") |> 
+      pivot_longer(cols = everything(),
+                   names_to = "nomes",
+                   values_to = "valores") |> 
+      ggplot(aes(x = nomes, y = valores/sum(valores), fill = nomes))+
+      geom_bar(stat = "identity")+
+      labs(title = labs_title_pg,
+           x = "", y = "Percentual (%)",fill = "Descrição")+
+      theme_minimal()+
+      theme(plot.title = ggtext::element_markdown(hjust = 0.5),
+            axis.text.x = element_blank())
+  )
+})
+```
+
+### Série
+
+```{r}
+renderPlotly({
+  labs_title_dsc_serie <- switch(input$categoria,
+                       "R$" = "Soma mensal de cada categoria <b>Monterária</b>",
+                       "kWh" = "Soma mensal de cada categoria <b>Consumo</b>",
+                       "kW" = "Soma mensal de cada categoria <b>Potência</b>")
+  select_categoria <- switch(input$categoria,
+                             "R$" = names(df[, grep("R\\$", names(df))]),
+                             "kWh" = names(df[, grep("kWh", names(df))]),
+                             "kW" = names(df[, setdiff(grep("kW", names(df)), grep("kWh", names(df)))]))
+    
+  ggplotly(
+    df |>
+    select(DatCompetencia, select_categoria) |>
+    group_by(DatCompetencia) |> 
+    summarise(across(everything(), ~ sum(.x, na.rm = TRUE), .names = "{.col}"),
+              .groups = "drop") |> 
+    pivot_longer(cols = -c(1),
+                 names_to = "nomes",
+                 values_to = "valores") |> 
+    ggplot(aes(x = DatCompetencia, y = valores, colour = nomes))+
+      geom_line()+
+      scale_x_date(date_breaks = "3 month",
+                   date_labels = "%b %Y")+
+      scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+      labs(title = labs_title_dsc_serie,
+           x = "",colour = "Descrição")+
+      theme_minimal()
+  )
+})
+```
+
+Valores
+================================================================================
+
+Inputs{.sidebar}
+--------------------------------------------------------------------------------
+
+```{r}
+selectInput("observacao_val", "Selecione a variável observacional:",
+            choices = c(names(df[ , 10:32]), "Receita Total"),
+            selected = "Receita Total")
+```
+
+Plots {.tabset}
+--------------------------------------------------------------------------------
+
+### Simples
+
+```{r}
+renderPlotly({
+  labs_title_val_s <- paste(ifelse(grepl("%", as_label(input$observacao_val)),"Média","Soma"),
+                            "<b>", as_label(input$observacao_val), "</b>",
+                            "por mês")
+  observacao_val = sym(input$observacao_val)
+  if(input$observacao_val == "Receita Total"){
+    df_val_s <- df |> 
+      mutate(`Receita Total` = rowSums(across(contains("Receita")), na.rm = TRUE))
+  }else{
+    df_val_s <- df
+  }
+  ggplotly(
+    df_val_s |> 
+      group_by(DatCompetencia) |> 
+      summarise(!!as_label(observacao_val) := sum(!!observacao_val, na.rm = T),
+                .groups = "drop") |> 
+      ggplot(aes(x = DatCompetencia, y = !!observacao_val))+
+      geom_line()+
+      geom_smooth(method = "loess", se = FALSE, color = "darkgoldenrod1")+
+      scale_x_date(date_breaks = "3 month",
+                   date_labels = "%b %Y")+
+      scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+      labs(title = labs_title_val_s,
+           x = "")+
+      theme_minimal()+
+      theme(plot.title = ggtext::element_markdown(hjust = 0.5))
+  )
+})
+```
+
+### Comparação de anos
+
+```{r}
+renderPlotly({
+  labs_title_val_ca <- paste(ifelse(grepl("%", as_label(input$observacao_val)),"Média","Soma"),
+                            "<b>", as_label(input$observacao_val), "</b>",
+                            "por mês")
+  observacao_val = sym(input$observacao_val)
+  if(input$observacao_val == "Receita Total"){
+    df_val_ca <- df |> 
+      mutate(`Receita Total` = rowSums(across(contains("Receita")), na.rm = TRUE)) |> 
+      mutate(ano = year(DatCompetencia))
+  }else{
+    df_val_ca <- df |> 
+      mutate(ano = as.factor(year(DatCompetencia)))
+  }
+  ggplotly(
+    df_val_ca |> 
+      group_by(DatCompetencia, ano) |> 
+      summarise(!!as_label(observacao_val) := sum(!!observacao_val, na.rm = T),
+                .groups = "drop") |> 
+      mutate(DatCompetencia = case_when(ano == 2024 ~ DatCompetencia - years(1),
+                                        ano == 2023 ~ DatCompetencia),
+             ano = as.factor(ano)) |> 
+      ggplot(aes(x = DatCompetencia, y = !!observacao_val, colour = ano))+
+      geom_line()+
+      scale_x_date(date_breaks = "2 month",
+                   date_labels = "%B")+
+      scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+      labs(title = labs_title_val_ca,
+           x = "", colour = "Ano")+
+      theme_minimal()+
+      theme(plot.title = ggtext::element_markdown(hjust = 0.5))
+  )
+})
+```
+
+Perfil do Consumidor
+================================================================================
+
+Inputs{.sidebar}
+--------------------------------------------------------------------------------
+
+```{r}
+selectInput("observacao_pc", "Selecione a variável observacional:",
+            choices = names(df[ , 10:32]),
+            selected = "Receita Energia (R$)")
+
+selectInput("categoria_pc", "Selecione a variável categórica:",
+            choices = names(df[ , 1:8]),
+            selected = "DscClasseConsumoMercado")
+```
+
+---
+
+```{r}
+selectInput("tipo_pc", HTML("Selecione a <b>tipo</b> da <b>série temporal</b>:"),
+            choices = c("Absoluta", "Proporcional"),
+            selected = "Absoluta")
+
+```
+
+Plots {.tabset}
+--------------------------------------------------------------------------------
+
+### Proporção Geral
+
+```{r}
+renderPlotly({
+  categoria_pc <- sym(input$categoria_pc)
+  labs_title_pc_pg <- paste("Proporção de<b>", input$categoria_pc,
+                            "</b>por<b>", input$observacao_pc,
+                            "</b> \n jan/2023 a out/2024")
+  ggplotly(
+    df |>
+      select(input$categoria_pc, input$observacao_pc) |> 
+      group_by(!!categoria_pc) |> 
+      summarise(!!input$observacao_pc := sum(.data[[input$observacao_pc]], na.rm = T),
+                .groups = "drop") |> 
+      ggplot(aes(x = !!categoria_pc, y = !!sym(input$observacao_pc)/sum(!!sym(input$observacao_pc)), fill = !!categoria_pc))+
+      geom_bar(stat = "identity")+
+      labs(title = labs_title_pc_pg,
+           x = "", y = "Percentual (%)",fill = "Descrição")+
+      theme_minimal()+
+      theme(plot.title = ggtext::element_markdown(hjust = 0.5),
+            axis.text.x = element_blank())
+  )
+})
+```
+
+### Série Temporal
+
+```{r}
+renderPlotly({
+  observacao_pc = sym(input$observacao_pc)
+  categoria_pc = sym(input$categoria_pc)
+  ggplotly(
+    switch(input$tipo_pc,
+      "Absoluta" = df |> 
+        group_by(DatCompetencia, !!categoria_pc) |> 
+        summarise(valor = sum(!!observacao_pc, na.rm = T), .groups = "drop") |> 
+        ggplot(aes(x = DatCompetencia, y = valor, colour = !!categoria_pc))+
+        geom_line()+
+        scale_x_date(date_breaks = "3 month",
+                     date_labels = "%m/%y")+
+        scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+        labs(title = paste("<b>Soma</b> da <b>", input$observacao_pc, "</b>\nde cada <b>", input$categoria_pc, "</b> por mês"),
+             y = as_label(observacao_pc))+
+        theme_minimal()+
+        theme(plot.title = ggtext::element_markdown(hjust = 0.5)),
+      "Proporcional" = df |> 
+        group_by(DatCompetencia, !!categoria_pc) |> 
+        summarise(soma_especifica = sum(!!observacao_pc, na.rm = T), .groups = 'drop') |> 
+        left_join(df |> 
+                    group_by(DatCompetencia) |> 
+                    summarise(soma_mensal = sum(!!observacao_pc, na.rm = T), .groups = 'drop')) |> 
+        mutate(perct = (soma_especifica/soma_mensal)*100) |> 
+        ggplot(aes(x = DatCompetencia, y = perct, colour = !!categoria_pc))+
+        geom_line()+
+        scale_x_date(date_breaks = "3 month",
+                     date_labels = "%m/%y")+
+        labs(title = paste("<b>Proporção</b> da <b>", input$observacao_pc, "</b>\nde cada <b>", input$categoria_pc,"</b> por mês"),
+             y = paste("Percentual", as_label(observacao_pc)))+
+        theme_minimal()+
+        theme(plot.title = ggtext::element_markdown(hjust = 0.5))
+      )
+  )
+})
+```
+
+Comparativo com outras empresas
+================================================================================
+
+Inputs{.sidebar}
+--------------------------------------------------------------------------------
+
+```{r}
+selectInput("observacao_emp", "Selecione a variável observacional:",
+            choices = names(dfe[ , 5:9]),
+            selected = "Receita Total")
+checkboxInput("destacar", "Destacar Eletropaulo na série temporal", value = FALSE)
+```
+
+---
+
+```{r}
+selectInput("categoria_emp", HTML("Selecione a <b>categórica</b> para comparar o <b>perfil</b>:"),
+            choices = c("DscClasseConsumoMercado","DscOpcaoEnergia"))
+
+selectInput("empresa", HTML("Selecione a <b>empresa</b> para comparar o <b>perfil</b>:"),
+            choices = setdiff(unique(dfe$Empresa), "ELETROPAULO"))
+```
+
+Plots {.tabset}
+--------------------------------------------------------------------------------
+
+### Série Temporal
+
+```{r}
+renderPlotly({
+  observacao_emp = sym(input$observacao_emp)
+  plot_comp_serie <- dfe |> 
+    group_by(DatCompetencia, Empresa) |> 
+    summarise(valor = sum(!!observacao_emp, na.rm = T),
+              .groups = "drop") |> 
+    ggplot(aes(x = DatCompetencia, y = valor, colour = Empresa))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%m/%y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = paste("Soma da<b>", input$observacao_emp, "</b>de cada Empresa por mês"),
+         x = "", y = as_label(observacao_emp))+
+    theme_minimal()+
+    theme(plot.title = ggtext::element_markdown(hjust = 0.5))
+  if (input$destacar == TRUE) {
+    plot_comp_serie <- plot_comp_serie +
+      scale_color_manual(values = c("ELETROPAULO" = "brown1",
+                                    "CPFL-PAULISTA" = "gray30",
+                                    "ELETROPAULO" = "gray30",
+                                    "ENEL-RJ" = "gray30",
+                                    "LIGHT" = "gray30",
+                                    "ENERGISA-MS" = "gray30",
+                                    "CEMIG" = "gray30",
+                                    "EDP-SP" = "gray30",
+                                    "EQUATORIAL-GO" = "gray30"))
+    }
+  ggplotly(plot_comp_serie)
+})
+```
+
+### Métricas
+
+```{r}
+renderPlotly({
+  labs_title_comp_met <- paste("Soma de <b>", input$observacao_emp,
+                               "</b> em out/2024")
+  observacao_emp = sym(input$observacao_emp)
+  ggplotly(
+    dfe |>
+      filter(DatCompetencia == ymd("2024-10-01")) |> 
+      group_by(Empresa) |> 
+      summarise(valor = sum(!!observacao_emp, na.rm = T),
+                .groups = "drop") |> 
+      ggplot(aes(x = Empresa, y = valor, fill = Empresa))+
+      geom_bar(stat = "identity")+
+      geom_hline(data = dfe |> 
+                 filter(DatCompetencia == ymd("2024-10-01"), Empresa == "ELETROPAULO") |> 
+                 summarise(valor = sum(!!observacao_emp, na.rm = TRUE)),
+               aes(yintercept = valor),
+               color = "red", linetype = "dashed", size = 0.5)+
+      scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+      labs(title = labs_title_comp_met,
+           x = "", y = "Percentual (%)",fill = "Descrição")+
+      theme_minimal()+
+      theme(plot.title = ggtext::element_markdown(hjust = 0.5),
+            axis.text.x = element_blank())
+  )
+})
+```
+
+### Perfil
+
+```{r}
+renderPlotly({
+  observacao_emp = sym(input$observacao_emp)
+  categoria_emp <- sym(input$categoria_emp)
+  labs_title_comp_perfil <- paste("Proporção de<b>", input$categoria_emp,
+                                  "</b>por<b>", input$observacao_emp,
+                                  "</b>out/2024")
+  ggplotly(
+    dfe |>
+      filter(Empresa %in% c("ELETROPAULO", input$empresa),
+             DatCompetencia == ymd("2024-10-01")) |> 
+      group_by(!!categoria_emp, Empresa) |> 
+      summarise(!!input$observacao_emp := sum(.data[[input$observacao_emp]], na.rm = T),
+                .groups = "drop") |> 
+      left_join(dfe |>
+                  filter(Empresa %in% c("ELETROPAULO", input$empresa),
+                         DatCompetencia == ymd("2024-10-01")) |> 
+                  group_by(Empresa) |> 
+                  summarise(soma_mensal = sum(.data[[input$observacao_emp]], na.rm = T), .groups = 'drop')) |> 
+      mutate(proporcao = !!sym(input$observacao_emp)/soma_mensal) |> 
+      ggplot(aes(x = !!categoria_emp, y = proporcao, fill = Empresa))+
+      geom_bar(stat = "identity", position = position_dodge())+
+      scale_fill_manual(values = setNames(c("brown1", "cornflowerblue"), c("ELETROPAULO", input$empresa)))+
+      labs(title = labs_title_comp_perfil,
+           x = "", y = "Percentual (%)",fill = "Descrição")+
+      theme_minimal()+
+      theme(plot.title = ggtext::element_markdown(hjust = 0.5),
+            axis.text.x = element_text(angle = 50))
+  )
+})
+```
+
+Último mês
+================================================================================
+
+L1
+--------------------------------------------------------------------------------
+
+### Numero de Consumidores
+
+```{r}
+df_out24_nc <- df[df$DatCompetencia == ymd("2024-10-01"), ] |>
+  group_by(DscClasseConsumoMercado) |> 
+  summarise(`Número de Consumidores` = sum(`Número de Consumidores`, na.rm = T)) |> 
+  mutate(DscClasseConsumoMercado = case_when(!DscClasseConsumoMercado %in% c("Residencial", "Comercial", "Industrial") ~ "Outro",
+                                             TRUE ~ DscClasseConsumoMercado))
+
+plot_ly(type = 'pie',
+        labels = df_out24_nc$DscClasseConsumoMercado,
+        values = df_out24_nc$`Número de Consumidores`,
+        hole = 0.5) |> 
+  layout(annotations = list(text = "7.9 milhões\nde\nConsumidores",
+                            font = list(size = 13, color = 'black'),
+                            showarrow = FALSE,
+                            x = 0.5, y = 0.5))
+```
+
+### Consumo Energia TUSD
+
+```{r}
+df_out24_tusd <- df[df$DatCompetencia == ymd("2024-10-01"), ] |>
+  group_by(DscClasseConsumoMercado) |> 
+  summarise(`Energia TUSD (kWh)` = sum(`Energia TUSD (kWh)`, na.rm = T)) |> 
+  mutate(DscClasseConsumoMercado = case_when(!DscClasseConsumoMercado %in% c("Residencial", "Comercial", "Industrial") ~ "Outro",
+                                             TRUE ~ DscClasseConsumoMercado))
+
+plot_ly(type = 'pie',
+        labels = df_out24_tusd$DscClasseConsumoMercado,
+        values = df_out24_tusd$`Energia TUSD (kWh)`,
+        hole = 0.5) |> 
+  layout(annotations = list(text = "3.8 bilhões\nde kWh",
+                            font = list(size = 13, color = 'black'),
+                            showarrow = FALSE,
+                            x = 0.5, y = 0.5))
+```
+
+L2
+--------------------------------------------------------------------------------
+
+### Receita Geral
+
+```{r}
+df_out24_receita <- df[df$DatCompetencia == ymd("2024-10-01"), ] |>
+  group_by(DscClasseConsumoMercado) |> 
+  summarise(`Receita Total` = rowSums(across(contains("Receita")), na.rm = TRUE)) |> 
+  mutate(DscClasseConsumoMercado = case_when(!DscClasseConsumoMercado %in% c("Residencial", "Comercial", "Industrial") ~ "Outro",
+                                             TRUE ~ DscClasseConsumoMercado))
+
+plot_ly(type = 'pie',
+        labels = df_out24_receita$DscClasseConsumoMercado,
+        values = df_out24_receita$`Receita Total`,
+        hole = 0.5) |> 
+  layout(annotations = list(text = "1.97 bilhões\nde R$",
+                            font = list(size = 13, color = 'black'),
+                            showarrow = FALSE,
+                            x = 0.5, y = 0.5))
+```
+
+### Demanda
+
+```{r}
+df_out24_demanda <- df[df$DatCompetencia == ymd("2024-10-01"), ] |>
+  group_by(DscClasseConsumoMercado) |> 
+  summarise(`Demanda Faturada (kW)` = sum(`Demanda Faturada (kW)`, na.rm = TRUE))
+
+plot_ly(type = 'pie',
+        labels = df_out24_demanda$DscClasseConsumoMercado,
+        values = df_out24_demanda$`Demanda Faturada (kW)`,
+        hole = 0.5) |> 
+  layout(annotations = list(text = "8 milhões\nde kW",
+                            font = list(size = 13, color = 'black'),
+                            showarrow = FALSE,
+                            x = 0.5, y = 0.5))
+```

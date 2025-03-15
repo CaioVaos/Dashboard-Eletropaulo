@@ -1,0 +1,559 @@
+---
+title: "Relatório"
+author: "Caio VAOS"
+date: '2024.2'
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(scales)
+df <- readr::read_csv2('Grupo2_ELETROPAULO.csv') |> 
+  select(-c(1:4)) |> 
+  pivot_wider(names_from = DscDetalheMercado,
+              values_from = VlrMercado)
+```
+
+# Categoriação dos Valores
+
+---
+
+## (R$)
+
+```{r}
+plotly::ggplotly(
+  df |>
+    select(c(1:13, contains("(R$)"))) |> 
+    group_by(DatCompetencia) |> 
+    summarise("PIS/COFINS (R$)" = sum(`PIS/COFINS (R$)`, na.rm = T),
+              "PIS/PASEP (R$)" = sum(`PIS/PASEP (R$)`, na.rm = T),
+              "Receita Energia (R$)" = sum(`Receita Energia (R$)`, na.rm = T),
+              "COFINS (R$)" = sum(`COFINS (R$)`, na.rm = T),
+              "Receita Demanda (R$)" = sum(`Receita Demanda (R$)`, na.rm = T), 
+              "Receita Ultrapassagem Demanda (R$)" = sum(`Receita Ultrapassagem Demanda (R$)`, na.rm = T),
+              "ICMS (R$)" = sum(`ICMS (R$)`, na.rm = T),
+              "Receita Bandeiras (R$)" = sum(`Receita Bandeiras (R$)`, na.rm = T),
+              "Receita energia compensada (R$)" = sum(`Receita energia compensada (R$)`, na.rm = T)) |> 
+    pivot_longer(cols = 2:10,
+                 names_to = "nomes",
+                 values_to = "valores") |> 
+    ggplot(aes(x = nomes, y = valores))+
+    geom_bar(stat = "identity")+
+    labs(title = "(R$) - Soma mensal das categorias")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    facet_wrap(~as.factor(DatCompetencia))+
+    theme_minimal()+
+    theme(axis.text.x = element_text(angle = 90, size = 3)))
+```
+
+---
+
+## (kW)
+
+```{r}
+plotly::ggplotly(
+  df |>
+    select(c(1:13, contains("(kW)"))) |> 
+    group_by(DatCompetencia) |> 
+    summarise("Demanda Faturada (kW)" = sum(`Demanda Faturada (kW)`, na.rm = T),
+              "Ultrapassagem Demanda (kW)" = sum(`Ultrapassagem Demanda (kW)`, na.rm = T)) |> 
+    pivot_longer(cols = 2:3,
+                 names_to = "nomes",
+                 values_to = "valores") |> 
+    ggplot(aes(x = nomes, y = valores))+
+    geom_bar(stat = "identity")+
+    labs(title = "(kW) - Soma mensal das categorias")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    facet_wrap(~as.factor(DatCompetencia))+
+    theme_minimal()+
+    theme(axis.text.x = element_text(angle = 90, size = 3)))
+```
+
+---
+
+## (kWh)
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    select(c(1:13, contains("(kWh)"))) |> 
+    group_by(DatCompetencia) |> 
+    summarise("Energia TUSD (kWh)" = sum(`Energia TUSD (kWh)`, na.rm = T),
+              "Energia TE (kWh)" = sum(`Energia TE (kWh)`, na.rm = T),
+              "Energia Consumida (kWh)" = sum(`Energia Consumida (kWh)`, na.rm = T),
+              "Energia Injetada (kWh)" = sum(`Energia Injetada (kWh)`, na.rm = T),
+              "PROINFA (kWh)" = sum(`PROINFA (kWh)`, na.rm = T),
+              "Energia compensada (kWh)" = sum(`Energia compensada (kWh)`, na.rm = T)) |> 
+    pivot_longer(cols = 2:7,
+                 names_to = "nomes",
+                 values_to = "valores") |> 
+    ggplot(aes(x = nomes, y = valores))+
+    geom_bar(stat = "identity")+
+    labs(title = "(kWh) - Soma mensal das categorias")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    facet_wrap(~as.factor(DatCompetencia))+
+    theme_minimal()+
+    theme(axis.text.x = element_text(angle = 90, size = 3)))
+```
+
+## Conclusão
+
+As variáveis mais significativas são:
+
+- **(R$)**: Receita Energia;
+
+- **(kW)**: Demanda Faturada;
+
+- **(kWh)**: Energia TUSD e Energia TE.
+
+---
+
+# Correlação
+
+```{r}
+matriz_cor <- df |> 
+  select(13:36) |> 
+  group_by(DatCompetencia) |> 
+  summarise(across(contains("R$"), ~ sum(.x, na.rm = TRUE), .names = "{.col}"),
+            across(contains("kWh"), ~ sum(.x, na.rm = TRUE), .names = "{.col}"),
+            across(contains("kW"), ~ sum(.x, na.rm = TRUE), .names = "{.col}"),
+            across(contains("%"), ~ mean(.x, na.rm = TRUE), .names = "{.col}")
+            .groups = "drop"
+    "PIS/COFINS (R$)" = sum(`PIS/COFINS (R$)`, na.rm = T),
+            "PIS/PASEP (R$)" = sum(`PIS/PASEP (R$)`, na.rm = T),
+            "Receita Energia (R$)" = sum(`Receita Energia (R$)`, na.rm = T),
+            "COFINS (R$)" = sum(`COFINS (R$)`, na.rm = T),
+            "Receita Demanda (R$)" = sum(`Receita Demanda (R$)`, na.rm = T), 
+            "Receita Ultrapassagem Demanda (R$)" = sum(`Receita Ultrapassagem Demanda (R$)`, na.rm = T),
+            "ICMS (R$)" = sum(`ICMS (R$)`, na.rm = T),
+            "Receita Bandeiras (R$)" = sum(`Receita Bandeiras (R$)`, na.rm = T),
+            "Receita energia compensada (R$)" = sum(`Receita energia compensada (R$)`, na.rm = T),
+            "Demanda Faturada (kW)" = sum(`Demanda Faturada (kW)`, na.rm = T),
+            "Ultrapassagem Demanda (kW)" = sum(`Ultrapassagem Demanda (kW)`, na.rm = T),
+            "Energia TUSD (kWh)" = sum(`Energia TUSD (kWh)`, na.rm = T),
+            "Energia TE (kWh)" = sum(`Energia TE (kWh)`, na.rm = T),
+            "Energia Consumida (kWh)" = sum(`Energia Consumida (kWh)`, na.rm = T),
+            "Energia Injetada (kWh)" = sum(`Energia Injetada (kWh)`, na.rm = T),
+            "PROINFA (kWh)" = sum(`PROINFA (kWh)`, na.rm = T),
+            "Energia compensada (kWh)" = sum(`Energia compensada (kWh)`, na.rm = T)) |> 
+  select(-1) |> 
+  cor()
+plotly::ggplotly(ggcorrplot::ggcorrplot(matriz_cor))
+```
+
+---
+
+# Bivariada
+
+## Categorias mais significativas {.tabset}
+
+Análise a partir da serie temporal bivariada em proporção
+
+### Receita Energia (R$)
+
+- **NomTipoMercado**: Regular
+
+- **DscModalidadeTarifaria**: Convencional
+
+- **DscSubGrupoTarifario**: B1
+
+- **DscClasseConsumoMercado**: Residencial
+
+- **DscSubClasseConsumidor**: Residencial e Não se aplica
+
+- **DscDetalheConsumidor**: Não se aplica
+
+- **DscPostoTarifario**: Não se aplica
+
+- **DscOpcaoEnergia**: Cativo
+
+### Demanda Faturada (kW)
+
+- **NomTipoMercado**: Regular
+
+- **DscModalidadeTarifaria**: Azul e Verde
+
+- **DscSubGrupoTarifario**: A4 e A2
+
+- **DscClasseConsumoMercado**: Industrial
+
+- **DscSubClasseConsumidor**:Não se aplica
+
+- **DscDetalheConsumidor**: Não se aplica e Fonte Incentivada. Ocorrência Inversão
+
+- **DscPostoTarifario**: Não se aplica
+
+- **DscOpcaoEnergia**: Livre
+
+### Energia TUSD (kWh)
+
+- **NomTipoMercado**: Regular
+
+- **DscModalidadeTarifaria**: Convencional
+
+- **DscSubGrupoTarifario**: B1 e A4
+
+- **DscClasseConsumoMercado**: Residencial, Industrial e Comercial
+
+- **DscSubClasseConsumidor**: Não se aplica e Residencial
+
+- **DscDetalheConsumidor**: Não se aplica
+
+- **DscPostoTarifario**: Não se aplica
+
+- **DscOpcaoEnergia**: Cativo
+
+### Energia TE (kWh)
+
+- **NomTipoMercado**: Regular
+
+- **DscModalidadeTarifaria**: Convencional
+
+- **DscSubGrupoTarifario**: B1
+
+- **DscClasseConsumoMercado**: Residencial
+
+- **DscSubClasseConsumidor**: Residencial e Não se aplica
+
+- **DscPostoTarifario**: Não se aplica
+
+- **DscOpcaoEnergia**: Cativo
+
+# Consumo
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(consumo = sum(c(`Energia TUSD (kWh)`,`Energia TE (kWh)`), na.rm = T), .groups = 'drop') |> 
+    ggplot(aes(x = DatCompetencia, y = consumo))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Soma TUSD e TE")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+# Demanda
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(demanda = sum(c(`Demanda Faturada (kW)`,`Demanda Contratada kW`), na.rm = T), .groups = 'drop') |> 
+    ggplot(aes(x = DatCompetencia, y = demanda))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Soma demanda faturada e contratada")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+# Receita
+
+## Soma receitas
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(Receita = sum(c(`Receita Demanda (R$)`, `Receita Energia (R$)`, `Receita Bandeiras (R$)`,
+                              `Receita energia compensada (R$)`, `Receita Ultrapassagem Demanda (R$)`), na.rm = T), .groups = 'drop') |> 
+    ggplot(aes(x = DatCompetencia, y = Receita))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Soma das Receitas")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+## Receita média por consumidor
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(Receita = sum(c(`Receita Demanda (R$)`, `Receita Energia (R$)`, `Receita Bandeiras (R$)`,
+                              `Receita energia compensada (R$)`, `Receita Ultrapassagem Demanda (R$)`), na.rm = T),
+              consumidores = sum(`Número de Consumidores`, na.rm = T),.groups = 'drop') |> 
+    mutate(media = Receita/consumidores) |> 
+    ggplot(aes(x = DatCompetencia, y = media))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Media de receita por consumidor")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+## Impacto tributário
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(Receita = sum(c(`Receita Demanda (R$)`, `Receita Energia (R$)`, `Receita Bandeiras (R$)`,
+                              `Receita energia compensada (R$)`, `Receita Ultrapassagem Demanda (R$)`), na.rm = T),
+              Impostos = sum(`COFINS (R$)`, `PIS/PASEP (R$)`, `ICMS (R$)`, na.rm = T),
+              .groups = 'drop') |> 
+    mutate(Pos_tributacao = Receita - Impostos) |> 
+    pivot_longer(cols = 2:4,
+                 names_to = "Nomes",
+                 values_to = "Valores") |> 
+    ggplot(aes(x = DatCompetencia, y = Valores, colour = Nomes))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Peso tributário")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+# Eficiencia energética
+
+## do consumo
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(`Energia Consumida (kWh)` = sum(c(`Energia Consumida (kWh)`), na.rm = T),
+              Energia_disponivel = sum(`Energia Consumida (kWh)`, `Energia Injetada (kWh)`, na.rm = T),.groups = 'drop') |> 
+    mutate(efciencia = (`Energia Consumida (kWh)`/Energia_disponivel)*100) |> 
+    ggplot(aes(x = DatCompetencia, y = efciencia))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Eficiencia energetica de consumo")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+## de Recita por energia consumida
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(Receita = sum(c(`Receita Demanda (R$)`, `Receita Energia (R$)`, `Receita Bandeiras (R$)`,
+                              `Receita energia compensada (R$)`, `Receita Ultrapassagem Demanda (R$)`), na.rm = T),
+              `Energia Consumida (kWh)` = sum(`Energia Consumida (kWh)`, na.rm = T),
+              .groups = 'drop') |> 
+    mutate(eficiencia = Receita/`Energia Consumida (kWh)`) |> 
+    ggplot(aes(x = DatCompetencia, y = eficiencia))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Receita por energia cosumida")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+## de compensação
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(`Energia compensada (kWh)` = sum(c(`Energia compensada (kWh)`), na.rm = T),
+              `Energia Consumida (kWh)` = sum(`Energia Consumida (kWh)`, na.rm = T),
+              .groups = 'drop') |> 
+    mutate(eficiencia = (1-(`Energia compensada (kWh)`/`Energia Consumida (kWh)`))*100) |> 
+    ggplot(aes(x = DatCompetencia, y = eficiencia))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Eficiencia de compensação energetica")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+## Perda no sistema
+
+```{r}
+plotly::ggplotly(
+  df |> 
+      group_by(DatCompetencia) |> 
+      summarise(Energia_disponivel = sum(`Energia Consumida (kWh)`, `Energia Injetada (kWh)`, na.rm = T),
+                `Energia Consumida (kWh)` = sum(`Energia Consumida (kWh)`, na.rm = T),
+                .groups = 'drop') |> 
+      mutate(perda = sum(Energia_disponivel, -`Energia Consumida (kWh)`, na.rm = TRUE),
+             perda_perct = (perda/Energia_disponivel)*100) |> 
+      ggplot(aes(x = DatCompetencia, y = perda_perct))+
+      geom_line()+
+      scale_x_date(date_breaks = "3 month",
+                   date_labels = "%b %Y")+
+      scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+      labs(title = "Percentual de perda energica")+
+      theme_minimal()+
+      theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+## pos descontos
+
+### Energia TUSD
+
+```{r}
+plotly::ggplotly(
+  teste <- df |> 
+    mutate(Desconto = `Energia TUSD (kWh)`*(`Desconto Energia TUSD %`/100),
+           Desconto = ifelse(is.na(Desconto), 0, Desconto),
+           TUSD_pos_desconto = `Energia TUSD (kWh)`- Desconto) |> 
+    group_by(DatCompetencia) |> 
+    summarise(`Energia TUSD (kWh)` = sum(`Energia TUSD (kWh)`, na.rm = T),
+              Desconto = sum(Desconto, na.rm = T),
+              TUSD_pos_desconto = sum(TUSD_pos_desconto, na.rm = T),
+              .groups = 'drop') |> 
+    pivot_longer(cols = c(`Energia TUSD (kWh)`, Desconto, TUSD_pos_desconto),
+                 names_to = "Nomes",
+                 values_to = "Valores") |> 
+    ggplot(aes(x = DatCompetencia, y = Valores, colour = Nomes))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Impacto desconto Energia TUSD")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+### Energia TE
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    mutate(Desconto = `Energia TE (kWh)`*(`Desconto Energia TE %`/100),
+           Desconto = ifelse(is.na(Desconto), 0, Desconto),
+           TE_pos_desconto = `Energia TE (kWh)`- Desconto) |> 
+    group_by(DatCompetencia) |> 
+    summarise(`Energia TE (kWh)` = sum(`Energia TE (kWh)`, na.rm = T),
+              Desconto = sum(Desconto, na.rm = T),
+              TE_pos_desconto = sum(TE_pos_desconto, na.rm = T),
+              .groups = 'drop') |> 
+    pivot_longer(cols = c(`Energia TE (kWh)`,Desconto, TE_pos_desconto),
+                 names_to = "Nomes",
+                 values_to = "Valores") |> 
+    ggplot(aes(x = DatCompetencia, y = Valores, colour = Nomes))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Impacto desconto Energia TE")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+### Demanda
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(demanda = sum(`Demanda Faturada (kW)`, `Demanda Contratada kW`, na.rm = T),
+              `Desconto Demanda %` = mean(`Desconto Demanda %`, na.rm = T)/100,
+              .groups = 'drop') |> 
+    mutate(demanda_pos_desconto = demanda- (demanda*`Desconto Demanda %`)) |> 
+    pivot_longer(cols = c(demanda, demanda_pos_desconto),
+                 names_to = "Nomes",
+                 values_to = "Valores") |> 
+    ggplot(aes(x = DatCompetencia, y = Valores, colour = Nomes))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Impacto desconto Demanda")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+### Energia Compensada
+
+```{r}
+plotly::ggplotly(
+  df |> 
+    group_by(DatCompetencia) |> 
+    summarise(`Energia compensada (kWh)` = sum(`Energia compensada (kWh)`, na.rm = T),
+              `Desconto de energia compensada %` = mean(`Desconto de energia compensada %`, na.rm = T)/100,
+              .groups = 'drop') |> 
+    mutate(energia_compensada_pos_desconto = `Energia compensada (kWh)`- (`Energia compensada (kWh)`*`Desconto de energia compensada %`)) |> 
+    pivot_longer(cols = c(`Energia compensada (kWh)`, energia_compensada_pos_desconto),
+                 names_to = "Nomes",
+                 values_to = "Valores") |> 
+    ggplot(aes(x = DatCompetencia, y = Valores, colour = Nomes))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Impacto desconto Energia Compensada")+
+    theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
+)
+```
+
+### Proporção pos desconto
+
+```{r }
+df_1 <- df |>
+    group_by(DatCompetencia) |> 
+    summarise(across(contains("(kWh)"), ~ sum(.x, na.rm = TRUE), .names = "{.col}"),
+              `Desconto Energia TUSD %` = mean(`Desconto Energia TUSD %`, na.rm = T)/100,
+              `Desconto Energia TE %` = mean(`Desconto Energia TE %`, na.rm = T)/100,
+              `Desconto de energia compensada %` = mean(`Desconto de energia compensada %`, na.rm = T)/100,
+              .groups = "drop") |> 
+    mutate(`Energia TUSD (kWh)` = `Energia TUSD (kWh)`- (`Energia TUSD (kWh)`*`Desconto Energia TUSD %`),
+           `Energia TE (kWh)` = `Energia TE (kWh)`- (`Energia TE (kWh)`*`Desconto Energia TE %`),
+           `Energia compensada (kWh)` = `Energia compensada (kWh)`- (`Energia compensada (kWh)`*`Desconto de energia compensada %`)) |> 
+    pivot_longer(cols = -c(1, `Desconto Energia TUSD %`, `Desconto Energia TE %`, `Desconto de energia compensada %`),
+                 names_to = "nomes",
+                 values_to = "valores")
+  
+plotly::ggplotly(
+  ggplot(df_1, aes(x = DatCompetencia, y = valores, colour = nomes))+
+    geom_line()+
+    scale_x_date(date_breaks = "3 month",
+                 date_labels = "%b %Y")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    labs(title = "Soma mensal categorias (kWh) pos desconto",
+         x = "")+
+    theme_minimal()
+)
+
+plotly::ggplotly(
+  ggplot(df_1, aes(x = nomes, y = valores, fill = nomes))+
+    geom_bar(stat = "identity")+
+    labs(title = paste("Soma mensal categorias (kWh) pos desconto"),
+         x = "", y = "")+
+    scale_y_continuous(labels = label_number(scale_cut = cut_short_scale()))+
+    facet_wrap(~as.factor(DatCompetencia))+
+    theme_minimal()+
+    theme(plot.title = ggtext::element_markdown(hjust = 0.5),
+          axis.text.x = element_blank())
+)
+```
+
